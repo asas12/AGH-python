@@ -84,7 +84,7 @@ def validate(expr):
     if par_count == 0 and state != 3 and state != 1:  # poprawne wyrażenie musi kończyć sie stanem False i mieć zamknięte wszystkie nawiasy
         return used_vars, resulting_expr
     else:
-        return False
+        return False, False
 
 
 def to_rpn(expr, vars):
@@ -198,6 +198,13 @@ def checker(used_vars, rpn_expr):
         del used_vars['0']
         zflag = True
     size = len(used_vars.keys())
+    if size == 0:
+        if oflag:
+            used_vars.update({'1': True})
+        if zflag:
+            used_vars.update({'0': False})
+        #print("here")
+        return rpn_solver(used_vars, rpn_expr)
     for i in range(2 ** size):
         mask = i
         for key in used_vars:
@@ -221,17 +228,29 @@ def checker(used_vars, rpn_expr):
 
 def quine_mccluskey_set(input):
     '''Przygotowuje rekurencję, sprawdza warunki dla danych wejściowych'''
-    no_of_vars = len(input[0])
-    if no_of_vars == 0: # nic nie spełnia funkcji
+    if input is True:
+        return True
+    elif input is False:
         return False
-    while no_of_vars%2==0:
-        no_of_vars/=2
-        if no_of_vars == 0:
-            return True # wszystko spełnia funkcję
+    #print("in:", input)
+    no_of_vars = len(input[0])
+    if no_of_vars == 0:  # nic nie spełnia funkcji
+        return False
+    if no_of_vars == input[1] ** 2:  # wszystko spełnia funkcję
+        return True
+    '''
+    while no_of_vars%2 == 0:
+
+        print(no_of_vars)
+        no_of_vars /= 2
+        if no_of_vars == 1:
+            return True '''
     input_dict = dict(zip(input[0], [False for i in input[0]]))
     #print("input_dict:", input_dict)
     word_length = input[1]
-    return quine_mccluskey(input[0], word_length, [])
+    result = quine_mccluskey(input[0], word_length, [])
+    #print("last res:", result)
+    return result
 
 
 def quine_mccluskey(input, word_length, former_expr):
@@ -257,6 +276,7 @@ def quine_mccluskey(input, word_length, former_expr):
                     result.append("".join(res))
                     input_dict[mo] = True
                     input_dict[lo] = True
+    result = list(set(result))
     for i in input_dict:
         if not input_dict[i]:
             #print("Can't join:", i)
@@ -264,7 +284,45 @@ def quine_mccluskey(input, word_length, former_expr):
     #print("res:", result, "used:", input_dict, "word_l:", word_length)
     if result:
         return quine_mccluskey(result, word_length, former_expr)
-    return result, word_length, former_expr
+    else:
+        return result, word_length, former_expr
+
+
+def optimizer(result, fun_output):  #f_o from checker
+    '''Minimalizuje wynik, kończąc algorytm QM'''
+    if result is True:
+        return True
+    elif result is False:
+        return False
+    input_dict = dict(zip(fun_output[0], [[] for i in fun_output[0]]))
+    results = result[2] #from QM
+    for var in fun_output[0]:
+        #print("var:", var)
+        for res in results:
+            i = 0
+            count = 0
+            for char in var:
+                if res[i] == char:
+                    count+=1
+                elif res[i] == '*':
+                    count+=1
+                i+=1
+            if count == i:
+                input_dict[var].append(res)
+    #print("ID", input_dict)
+    final_res = []
+    #while input_dict:
+    for var in input_dict:
+        i=1
+        tmp_mask_list = input_dict[var]
+        if len(tmp_mask_list) == i:
+            for a in tmp_mask_list:
+                final_res.append(a)
+                for key in input_dict:
+                    if a in input_dict[key]:
+                        input_dict[key] = []
+        i += 1
+    return final_res
 
 
 def to_displayable_format(used_vars, end_res):
@@ -274,7 +332,7 @@ def to_displayable_format(used_vars, end_res):
     elif end_res is False:
         return False
     uv = list(used_vars.keys())
-    res_masks = set(end_res[2])
+    res_masks = set(end_res)
     result = ""
     for var in res_masks:
         i = 0
@@ -297,8 +355,9 @@ def run(expr):
     if used_vars:
         rpn_expr = to_rpn(new_expr, used_vars)
         checker_res = checker(used_vars, rpn_expr)
-        end_res = quine_mccluskey_set(checker_res)
-        result = to_displayable_format(used_vars, end_res)
+        qm_res = quine_mccluskey_set(checker_res)
+        opt_res = optimizer(qm_res, checker_res)
+        result = to_displayable_format(used_vars, opt_res)
         print("Result: ", result)
     else:
         print("Improper format.")
