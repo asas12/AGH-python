@@ -5,22 +5,22 @@ from PIL import Image
 from PIL import ImageDraw
 
 
-def color_to_rgb(color, palette):
+def color_to_rgb(color):
     if color[0] == '(':
-        print("lit:", ast.literal_eval(color))
         return ast.literal_eval(color)
     elif color[0] == '#':
-        return (int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16))
+        return int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
     else:
-        return color_to_rgb(palette[color], palette)
+        return color
 
 
-def create_figures(figures_list, def_color, palette):
+def create_figures(figures_list, def_color):
     result = []
     for figure in figures_list:
         if 'color' not in figure:
             figure['color'] = def_color
-        figure['color'] = color_to_rgb(figure['color'], palette)
+        else:
+            figure['color'] = color_to_rgb(figure['color'])
         result.append(create_figure(figure))
     return result
 
@@ -38,13 +38,14 @@ def create_figure(figure):
         return Circle(figure['x'], figure['y'], figure['radius'], figure['color'])
 
 
+
 class Figure:
 
     def __init__(self, color):
         self.color = color
 
-
-    # def print_onto_image(self, image):
+    def print_onto_image(self, image):
+        pass
 
 
 class Point(Figure):
@@ -54,8 +55,6 @@ class Point(Figure):
         self.x = x
         self.y = y
 
-    # TODO
-    # na pewno! da się lepiej, jakoś statycznie, mieć jeden drawer
     def print_onto_image(self, image):
         draw = ImageDraw.Draw(image)
         draw.point((self.x, self.y), self.color)
@@ -69,7 +68,7 @@ class Polygon(Figure):
 
     def print_onto_image(self, image):
         draw = ImageDraw.Draw(image)
-        #powinny być tuple, albo nie listy - points_list
+        # powinny być tuple, albo nie listy - points_list
         draw.polygon([tuple(x) for x in self.points_list], self.color)
 
 
@@ -84,7 +83,9 @@ class Rectangle(Figure):
 
     def print_onto_image(self, image):
         draw = ImageDraw.Draw(image)
-        draw.rectangle([self.x-self.width/2, self.y-self.height/2, self.x+self.width/2, self.y+self.height/2], self.color)
+        draw.rectangle(
+            [self.x-self.width/2, self.y-self.height/2, self.x+self.width/2, self.y+self.height/2],
+            self.color)
 
 
 class Square(Figure):
@@ -98,7 +99,7 @@ class Square(Figure):
     def print_onto_image(self, image):
         draw = ImageDraw.Draw(image)
         draw.rectangle(
-            [self.x - self.size / 2, self.y - self.size / 2, self.x + self.size / 2, self.y + self.size / 2],
+            [self.x - self.size/2, self.y - self.size / 2, self.x + self.size / 2, self.y + self.size / 2],
             self.color)
 
 
@@ -112,61 +113,64 @@ class Circle(Figure):
 
     def print_onto_image(self, image):
         draw = ImageDraw.Draw(image)
-        draw.ellipse([self.x-self.radius/2, self.y-self.radius/2,self.x+self.radius/2, self.y+self.radius/2], self.color)
+        draw.ellipse(
+            [self.x-self.radius/2, self.y-self.radius/2,self.x+self.radius/2, self.y+self.radius/2],
+            self.color)
 
 
-class MyImage():
+class MyImage:
 
-    def __init__(self, screen_info, palette):
-        self.__palette = palette
+    def __init__(self, screen_info, figures):
         self.__width = screen_info['width']
         self.__height = screen_info['height']
-        self.__bg_color = color_to_rgb(screen_info['bg_color'], self.__palette)
-        self.__fg_color = color_to_rgb(screen_info['fg_color'], self.__palette)
+        self.__bg_color = screen_info['bg_color']
+        self.__fg_color = screen_info['fg_color']
         self.image = Image.new("RGB", (self.__width, self.__height), self.__bg_color)
-        self.figures_array = []
+        self.figures_array = create_figures(figures, self.__fg_color)
 
-    def process_figures(self):
+    def paint_figures_onto_image(self):
         for figure in self.figures_array:
             figure.print_onto_image(self.image)
 
     def show_self(self):
         self.image.show()
 
-    def save_to_file(self, file_handler):
-        #for i in range(300, 500):
-        #    for j in range(200, 400):
-        #        self.image.putpixel((i, j), (255, 0, 0))
-        # w.write_packed(file_handler, self.image_array)
-        # color_pixel((255, 0, 0), 1, 1, self.image_array)
-        # w.write(file_handler, self.image_array)
-        self.image.save(file_handler, format="png")
+    def save_to_file(self, filename):
+        self.image.save(filename, format="png")
 
 
-def init_and_parse():
+def parse_filenames():
     parser = argparse.ArgumentParser(description='Get filenames.')
     parser.add_argument('input_file_name')
     parser.add_argument('-o', '--output', default=None)
     args = parser.parse_args()
+    print('input:', args.input_file_name, '\noutput: ', args.output)
     return args.input_file_name, args.output
 
 
-def process_json(input_file):
-    input_file_handle = open(input_file)
-    data = json.load(input_file_handle)
-    print('Screen info:', data['Screen'])
-    print('Palette:', data['Palette'])
+def process_json(in_filename):
+    with open(in_filename) as in_file_handle:
+        json_data = json.load(in_file_handle)
+    return json_data['Screen'], json_data['Palette'], json_data['Figures']
 
-    return data
+
+def palette_to_rgb(palette):
+    for color in palette:
+        palette[color] = color_to_rgb(palette[color])
+
+
+def screen_colors_to_rgb(screen, palette):
+    screen['fg_color'] = palette[screen['fg_color']]
+    screen['bg_color'] = palette[screen['bg_color']]
 
 
 if __name__ == "__main__":
-    input_file, output_file = init_and_parse()
-    print('input:', input_file, 'output: ', output_file)
-    data = process_json(input_file)
-    img = MyImage(data['Screen'], data['Palette'])
-    img.figures_array = create_figures(data['Figures'], data['Screen']['fg_color'], data['Palette'])
-    img.process_figures()
-    if output_file is not None:
-        img.save_to_file(output_file)
+    input_filename, output_filename = parse_filenames()
+    screen, palette, figures = process_json(input_filename)
+    palette_to_rgb(palette)
+    screen_colors_to_rgb(screen, palette)
+    img = MyImage(screen, figures)
+    img.paint_figures_onto_image()
+    if output_filename is not None:
+        img.save_to_file(output_filename)
     img.show_self()
