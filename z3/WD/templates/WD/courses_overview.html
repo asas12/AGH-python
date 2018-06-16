@@ -1,0 +1,11 @@
+{% if courses_list %}
+    <h1>Courses:</h1>
+    <ul>
+    {% for course in courses_list %}
+        <li><a href="{%  url 'WD:course_info' course %}">{{ course }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No courses.</p>
+{% endif %}
+<a href="{%  url 'WD:index' %}">Back to the main paige.</a>

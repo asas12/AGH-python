@@ -1,0 +1,7 @@
+<h1>Give grade:</h1>
+<form action="{% url 'WD:give_grade' %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <p><input type="submit" value="Confirm" /></p>
+</form>
+<a href="{%  url 'WD:index' %}">Back to the main paige.</a>

@@ -1,0 +1,32 @@
+
+<h1>Create new course.</h1>
+
+<!--
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+<p>Choose semester:</p>
+<form action="{% url 'WD:create_course' %}" method="post">
+{% csrf_token %}
+{% for i in range %}
+    <input type="radio" name="semester" id="semester{{ forloop.counter }}" value="{{ forloop.counter }}" />
+    <label for="semester{{ forloop.counter }}">{{ forloop.counter  }}</label><br />
+{% endfor %}
+<p>Choose lecturer:</p>
+<select name="lecturer" title="Choose lecturer">
+{% for lecturer in lecturer_list %}
+    <option  id="lecturer{{ forloop.counter }}" value="{{ lecturer }}">{{ lecturer }}</option>
+{% endfor %}
+</select>
+<p><label for="{{ course_name }}">Enter course name:</label>
+    <input name="course_name" title="Enter course name" type="text" id="{{ course_name }}"></p>
+<p><input type="submit" value="Confirm" /></p>
+</form>
+<a href="{%  url 'WD:index' %}">Back to the main paige.</a>
+-->
+
+<form action="{% url 'WD:create_course' %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <p><input type="submit" value="Confirm" /></p>
+</form>
+<a href="{%  url 'WD:index' %}">Back to the main paige.</a>

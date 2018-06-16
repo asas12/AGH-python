@@ -1,0 +1,13 @@
+<h1>Choose students.</h1>
+
+{% if semester %}<p><strong>Semester: {{ semester }}</strong></p>{% endif %}
+{% if lecturer %}<p><strong>Lecturer: {{ lecturer }}</strong></p>{% endif %}
+{% if course_name %}<p><strong>Course name: {{ course_name }}</strong></p>{% endif %}
+
+<form action="{% url 'WD:choose_students' semester lecturer.id course_name %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <p><input type="submit" value="Confirm" /></p>
+</form>
+<p><a href="{%  url 'WD:create_course' %}">Back.</a></p>
+<a href="{%  url 'WD:index' %}">Back to the main paige.</a>

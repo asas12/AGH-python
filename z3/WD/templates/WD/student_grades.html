@@ -1,0 +1,13 @@
+<h1>{{ student }}'s grades</h1>
+
+{% if grades_list %}
+    <ul>
+    {% for grade in grades_list %}
+        <li>{{ grade.course}}: <a href="{%  url 'WD:student_grade' student.id grade.course.name %}">{{ grade.grade }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No grades.</p>
+{% endif %}
+<p><a href="{%  url 'WD:student_info' student.id %}">Back to student's paige.</a></p>
+<a href="{%  url 'WD:index' %}">Back to the main paige.</a>

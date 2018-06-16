@@ -1,0 +1,11 @@
+{% if students_list %}
+    <h1>Students:</h1>
+    <ul>
+    {% for student in students_list %}
+        <li><a href="{%  url 'WD:student_info' student.id %}">{{ student }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No students.</p>
+{% endif %}
+<a href="{%  url 'WD:index' %}">Back to the main paige.</a>
